@@ -1,0 +1,186 @@
+.game-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  min-height: 100vh;
+  padding: 1rem;
+  margin: 0 auto;
+}
+
+.game-header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.game-header h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.game-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.messages-container {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  overflow-y: auto;
+  min-height: 300px;
+  max-height: calc(100vh - 400px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.message {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  line-height: 1.6;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-system {
+  background: rgba(100, 100, 150, 0.2);
+  border-left: 3px solid #6b8dd6;
+  color: #e0e0e0;
+}
+
+.message-player {
+  background: rgba(100, 150, 100, 0.2);
+  border-left: 3px solid #6bd686;
+  color: #fff;
+  text-align: right;
+}
+
+.player-prefix {
+  font-weight: bold;
+  color: #6bd686;
+}
+
+.typing-indicator {
+  color: #999;
+  font-style: italic;
+}
+
+.input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.command-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.command-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.command-input:focus {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #6b8dd6;
+  box-shadow: 0 0 0 3px rgba(107, 141, 214, 0.2);
+}
+
+.command-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.command-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.submit-button {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #6b8dd6 0%, #5a7bc4 100%);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.submit-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7a9de6 0%, #6a8bd4 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(107, 141, 214, 0.4);
+}
+
+.submit-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .game-container {
+    padding: 0.5rem;
+  }
+
+  .game-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .messages-container {
+    min-height: 250px;
+    max-height: calc(100vh - 350px);
+    padding: 0.75rem;
+  }
+
+  .message {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .command-input {
+    font-size: 0.9rem;
+    padding: 0.65rem 0.85rem;
+  }
+
+  .submit-button {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+  }
+}
+
+
+
+
+

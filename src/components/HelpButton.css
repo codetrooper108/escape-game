@@ -1,0 +1,42 @@
+.help-button {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6b8dd6 0%, #5a7bc4 100%);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.help-button:hover {
+  background: linear-gradient(135deg, #7a9de6 0%, #6a8bd4 100%);
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(107, 141, 214, 0.4);
+}
+
+.help-button:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 480px) {
+  .help-button {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 1.25rem;
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+}
+
+

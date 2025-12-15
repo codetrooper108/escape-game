@@ -1,0 +1,56 @@
+.hint-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.hint-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f4a460 0%, #f39c12 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
+}
+
+.hint-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.hint-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: linear-gradient(135deg, #7f8c8d 0%, #95a5a6 100%);
+}
+
+.hint-icon {
+  font-size: 1.1rem;
+}
+
+.hint-text {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+  .hint-button {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .hint-icon {
+    font-size: 1rem;
+  }
+}
+
+
+
+
+
