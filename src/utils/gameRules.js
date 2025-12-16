@@ -22,17 +22,7 @@ function findItem(inventory, itemNames) {
 // Game Rules Engine - validates actions and updates state
 export function processGameRule(action, gameState, inventory) {
   const { type, object, value, target } = action
-  // Handle both old and new state structures for compatibility
   const roomState = gameState.roomState || gameState
-
-  // DEBUG MODE: Log rule processing
-  if (import.meta.env.DEV) {
-    console.log('🎮 Processing rule:', { type, object, value, target })
-    console.log('📊 Current room state:', JSON.parse(JSON.stringify(roomState)))
-    console.log('🎒 Current inventory:', inventory.map(i => i.name))
-    console.log('🔍 Bookshelf examined?', roomState.bookshelfExamined)
-    console.log('🔍 Diary found?', roomState.diaryFound)
-  }
 
   // RULE: Examine Clock
   if (type === 'examine' && object === 'clock') {
@@ -79,7 +69,7 @@ export function processGameRule(action, gameState, inventory) {
     }
   }
 
-  // RULE: Open Clock (requires examination first)
+  // RULE: Open Clock
   if (type === 'open' && object === 'clock') {
     if (!roomState.clockExamined) {
       return {
@@ -102,13 +92,6 @@ export function processGameRule(action, gameState, inventory) {
   // RULE: Examine Bookshelf
   if (type === 'examine' && object === 'bookshelf') {
     if (!roomState.bookshelfExamined) {
-      // DEBUG: Log the state update
-      if (import.meta.env.DEV) {
-        console.log('📚 Bookshelf examination triggered')
-        console.log('   Current bookshelfExamined:', roomState.bookshelfExamined)
-        console.log('   Setting bookshelfExamined to TRUE')
-      }
-      
       return {
         success: true,
         description: 'You scan the dusty bookshelf filled with old books. Among them, a leather-bound diary catches your eye. You can now examine or read it.',
@@ -119,37 +102,34 @@ export function processGameRule(action, gameState, inventory) {
     }
     return {
       success: true,
-      description: 'You\'ve already examined the bookshelf. The leather diary is still visible among the books.'
+      description: 'You have already examined the bookshelf. The leather diary is still visible among the books.'
     }
   }
 
-  // RULE: Examine/Read/Open Diary (all work the same way)
+  // RULE: Read/Examine Diary
   if (object === 'diary' && (type === 'read' || type === 'examine' || type === 'open')) {
-    // Check if diary has been found (bookshelf examined)
-    const diaryAvailable = roomState.bookshelfExamined || roomState.diaryFound || hasItem(inventory, ['Diary', 'diary'])
+    const diaryAvailable = roomState.bookshelfExamined || roomState.diaryFound
     
     if (!diaryAvailable) {
       return {
         success: false,
-        error: 'You don\'t see a diary here. Try examining the bookshelf first.'
+        error: 'You do not see a diary here. Try examining the bookshelf first.'
       }
     }
     
-    // If not read yet, read it
     if (!roomState.diaryRead) {
       return {
         success: true,
-        description: 'You carefully open the worn diary. Inside, written in elegant script: "Time stands still at midnight. The old clock holds secrets for those who listen."',
+        description: 'You carefully open the worn diary. Inside, written in elegant script: Time stands still at midnight. The old clock holds secrets for those who listen.',
         stateUpdates: {
           roomState: { diaryRead: true }
         }
       }
     }
     
-    // Already read
     return {
       success: true,
-      description: 'The diary\'s cryptic message echoes in your mind: "Time stands still at midnight."'
+      description: 'The diary message echoes in your mind: Time stands still at midnight.'
     }
   }
 
@@ -170,7 +150,7 @@ export function processGameRule(action, gameState, inventory) {
     }
   }
 
-  // RULE: Open Desk (requires desk_key in inventory)
+  // RULE: Open Desk
   if (type === 'open' && object === 'desk') {
     if (roomState.deskOpened) {
       return {
@@ -220,7 +200,7 @@ export function processGameRule(action, gameState, inventory) {
     }
     return {
       success: false,
-      error: 'You don\'t have a desk key. You need to find it first.'
+      error: 'You do not have a desk key. You need to find it first.'
     }
   }
 
@@ -229,7 +209,7 @@ export function processGameRule(action, gameState, inventory) {
     if (!roomState.paintingExamined) {
       return {
         success: true,
-        description: 'The painting depicts a serene moonlit scene. You notice it\'s hanging loosely and could be removed.',
+        description: 'The painting depicts a serene moonlit scene. You notice it is hanging loosely and could be removed.',
         stateUpdates: {
           roomState: { paintingExamined: true }
         }
@@ -263,7 +243,7 @@ export function processGameRule(action, gameState, inventory) {
     if (!roomState.safeFound) {
       return {
         success: false,
-        error: 'You don\'t see a safe here. Try examining the painting.'
+        error: 'You do not see a safe here. Try examining the painting.'
       }
     }
     return {
@@ -272,19 +252,19 @@ export function processGameRule(action, gameState, inventory) {
     }
   }
 
-  // RULE: Open Safe (requires code 1200)
+  // RULE: Open Safe
   if ((type === 'open' && object === 'safe') || (type === 'enter' && object === 'safe')) {
     if (!roomState.safeFound) {
       return {
         success: false,
-        error: 'You don\'t see a safe here. Try examining the painting first.'
+        error: 'You do not see a safe here. Try examining the painting first.'
       }
     }
     if (value === '1200') {
       if (!roomState.safeOpened) {
         return {
           success: true,
-          description: 'You enter the code 1200. The safe clicks open, but it\'s empty inside. A red herring!',
+          description: 'You enter the code 1200. The safe clicks open, but it is empty inside. A red herring!',
           stateUpdates: {
             roomState: { safeOpened: true }
           }
@@ -298,12 +278,12 @@ export function processGameRule(action, gameState, inventory) {
     if (value) {
       return {
         success: false,
-        error: 'The code doesn\'t work. The safe remains locked.'
+        error: 'The code does not work. The safe remains locked.'
       }
     }
     return {
       success: false,
-      error: 'The safe requires a 4-digit code. Try "open safe 1200" or "enter 1200".'
+      error: 'The safe requires a 4-digit code. Try open safe 1200 or enter 1200.'
     }
   }
 
@@ -324,7 +304,7 @@ export function processGameRule(action, gameState, inventory) {
     }
   }
 
-  // RULE: Open Door (requires golden_key in inventory) - WIN CONDITION
+  // RULE: Open Door - WIN CONDITION
   if (type === 'open' && object === 'door') {
     const hasGoldenKey = hasItem(inventory, ['Golden Key', 'golden key'])
     if (hasGoldenKey || roomState.doorUnlocked) {
@@ -352,41 +332,37 @@ export function processGameRule(action, gameState, inventory) {
     }
     return {
       success: false,
-      error: 'You don\'t have a golden key. You need to find it first.'
+      error: 'You do not have a golden key. You need to find it first.'
     }
   }
 
-  // RULE: Examine Fireplace (red herring)
+  // RULE: Examine Fireplace
   if (type === 'examine' && (object === 'fireplace' || action.originalCommand?.toLowerCase().includes('fireplace'))) {
     return {
       success: true,
-      description: 'The stone fireplace is cold and hasn\'t been used in years. Ashes and dust fill the hearth. Nothing useful here.'
+      description: 'The stone fireplace is cold and has not been used in years. Ashes and dust fill the hearth. Nothing useful here.'
     }
   }
 
-  // Default: Unknown command or unrecognized object
+  // Default: Unknown command
   const validObjects = ['clock', 'desk', 'bookshelf', 'diary', 'painting', 'safe', 'door', 'fireplace']
   
   if (type && !object) {
-    // Has action but no object
     return {
       success: false,
-      error: `What would you like to ${type}? Try: ${validObjects.slice(0, 5).map(obj => `'${type} ${obj}'`).join(', ')}`
+      error: `What would you like to ${type}? Try: ${validObjects.slice(0, 5).map(obj => `${type} ${obj}`).join(', ')}`
     }
   }
   
   if (object && !validObjects.includes(object)) {
-    // Unrecognized object
     return {
       success: false,
-      error: `You don't see "${object}" here. Visible objects: ${validObjects.join(', ')}. Try examining one of these.`
+      error: `You do not see ${object} here. Visible objects: ${validObjects.join(', ')}. Try examining one of these.`
     }
   }
   
-  // Generic error
   return {
     success: false,
-    error: `I didn't understand that. Try: 'examine [object]', 'open [object]', 'use [item] on [object]', or type ? for help.`
+    error: 'I did not understand that. Try: examine [object], open [object], use [item] on [object], or type ? for help.'
   }
 }
-```
