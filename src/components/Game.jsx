@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { callHuggingFaceAPI } from '../services/huggingFaceAPI'
 import { parseCommand } from '../utils/gameLogic'
 import { processGameRule } from '../utils/gameRules'
@@ -43,6 +43,21 @@ function Game() {
   const [isLoading, setIsLoading] = useState(false)
   const [showWinScreen, setShowWinScreen] = useState(false)
   const messagesEndRef = useRef(null)
+  
+  // CRITICAL FIX: Use ref to track current state for immediate access
+  // This ensures we always use the latest state, even before React re-renders
+  const gameStateRef = useRef(gameState)
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    gameStateRef.current = gameState
+    if (import.meta.env.DEV) {
+      console.log('📌 State ref updated:', {
+        bookshelfExamined: gameState.roomState.bookshelfExamined,
+        diaryFound: gameState.roomState.diaryFound
+      })
+    }
+  }, [gameState])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -52,18 +67,49 @@ function Game() {
     scrollToBottom()
   }, [messages])
 
+  // DEBUG: Monitor state changes for bookshelf
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.log('🔄 Game state updated:', {
+        bookshelfExamined: gameState.roomState.bookshelfExamined,
+        diaryFound: gameState.roomState.diaryFound,
+        inventory: gameState.inventory.map(i => i.name)
+      })
+    }
+  }, [gameState.roomState.bookshelfExamined, gameState.roomState.diaryFound, gameState.inventory])
+
   const addMessage = (type, text) => {
     setMessages(prev => [...prev, { type, text, timestamp: Date.now() }])
   }
 
   const updateGameState = (updates) => {
-    setGameState(prev => ({
-      ...prev,
-      inventory: updates.inventory !== undefined ? updates.inventory : prev.inventory,
-      roomState: updates.roomState ? { ...prev.roomState, ...updates.roomState } : prev.roomState,
-      hintsUsed: updates.hintsUsed !== undefined ? updates.hintsUsed : prev.hintsUsed,
-      moves: updates.moves !== undefined ? updates.moves : prev.moves
-    }))
+    setGameState(prev => {
+      const newState = {
+        ...prev,
+        inventory: updates.inventory !== undefined ? updates.inventory : prev.inventory,
+        roomState: updates.roomState ? { ...prev.roomState, ...updates.roomState } : prev.roomState,
+        hintsUsed: updates.hintsUsed !== undefined ? updates.hintsUsed : prev.hintsUsed,
+        moves: updates.moves !== undefined ? updates.moves : prev.moves
+      }
+      
+      // CRITICAL FIX: Update ref immediately so next command uses latest state
+      gameStateRef.current = newState
+      
+      // DEBUG: Log state update
+      if (import.meta.env.DEV) {
+        console.log('🔄 State update:', {
+          before: prev.roomState,
+          after: newState.roomState,
+          updates: updates
+        })
+        if (updates.roomState?.bookshelfExamined !== undefined) {
+          console.log('✅ Bookshelf examined flag set to:', updates.roomState.bookshelfExamined)
+          console.log('📌 Ref updated immediately - next command will use new state')
+        }
+      }
+      
+      return newState
+    })
   }
 
   const handleCommand = async (command) => {
@@ -87,17 +133,44 @@ function Game() {
       }
       
       // STEP 2: Process game rule (JavaScript - validates action, updates state)
-      const ruleResult = processGameRule(parsed, { roomState: gameState.roomState }, gameState.inventory)
+      // CRITICAL FIX: Use ref to get the LATEST state, not the stale closure value
+      // This ensures we use the state that was just updated by the previous command
+      const currentState = gameStateRef.current
+      const ruleResult = processGameRule(parsed, { roomState: currentState.roomState }, currentState.inventory)
+      
+      // DEBUG: Verify we're using the latest state
+      if (import.meta.env.DEV) {
+        console.log('🔍 State used for rule check:', {
+          fromRef: currentState.roomState.bookshelfExamined,
+          fromState: gameState.roomState.bookshelfExamined,
+          match: currentState.roomState.bookshelfExamined === gameState.roomState.bookshelfExamined
+        })
+      }
       
       // DEBUG: Log rule result
       if (import.meta.env.DEV) {
         console.log('✅ Rule result:', ruleResult)
+        console.log('📊 Current state before update:', gameState.roomState)
       }
       
       if (ruleResult.success) {
-        // Update game state with rule results
+        // Update game state with rule results IMMEDIATELY
         if (ruleResult.stateUpdates) {
+          // DEBUG: Log what we're about to update
+          if (import.meta.env.DEV) {
+            console.log('🔄 About to apply state updates:', ruleResult.stateUpdates)
+            if (ruleResult.stateUpdates.roomState?.bookshelfExamined !== undefined) {
+              console.log('📚 Setting bookshelfExamined to:', ruleResult.stateUpdates.roomState.bookshelfExamined)
+            }
+          }
+          
+          // Apply state updates - React will batch this
           updateGameState(ruleResult.stateUpdates)
+          
+          // DEBUG: Verify update was scheduled
+          if (import.meta.env.DEV) {
+            console.log('✅ State update function called - React will apply on next render')
+          }
         }
 
         // If win condition met
@@ -109,10 +182,12 @@ function Game() {
         }
 
         // STEP 3: Get AI description (AI only generates description, not logic)
-        const updatedInventory = ruleResult.stateUpdates?.inventory || gameState.inventory
+        // CRITICAL FIX: Use ref to get latest state, then merge with updates
+        const currentStateForAI = gameStateRef.current
+        const updatedInventory = ruleResult.stateUpdates?.inventory || currentStateForAI.inventory
         const updatedRoomState = ruleResult.stateUpdates?.roomState 
-          ? { ...gameState.roomState, ...ruleResult.stateUpdates.roomState }
-          : gameState.roomState
+          ? { ...currentStateForAI.roomState, ...ruleResult.stateUpdates.roomState }
+          : currentStateForAI.roomState
 
         const aiDescription = await callHuggingFaceAPI(
           command,

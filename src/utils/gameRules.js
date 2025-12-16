@@ -28,8 +28,10 @@ export function processGameRule(action, gameState, inventory) {
   // DEBUG MODE: Log rule processing
   if (import.meta.env.DEV) {
     console.log('🎮 Processing rule:', { type, object, value, target })
-    console.log('📊 Current room state:', roomState)
+    console.log('📊 Current room state:', JSON.parse(JSON.stringify(roomState)))
     console.log('🎒 Current inventory:', inventory.map(i => i.name))
+    console.log('🔍 Bookshelf examined?', roomState.bookshelfExamined)
+    console.log('🔍 Diary found?', roomState.diaryFound)
   }
 
   // RULE: Examine Clock
@@ -39,7 +41,7 @@ export function processGameRule(action, gameState, inventory) {
         success: true,
         description: 'The grandfather clock stands tall, its pendulum swinging rhythmically. The clock face shows the current time, and you notice it can be adjusted.',
         stateUpdates: {
-          roomState: { ...roomState, clockExamined: true }
+          roomState: { clockExamined: true }
         }
       }
     }
@@ -61,7 +63,7 @@ export function processGameRule(action, gameState, inventory) {
           success: true,
           description: 'You carefully turn the clock hands to midnight (12:00). With a soft click, a hidden compartment in the clock opens, revealing a small key!',
           stateUpdates: {
-            roomState: { ...roomState, clockOpened: true, clockExamined: true },
+            roomState: { clockOpened: true, clockExamined: true },
             inventory: [...inventory, { name: 'Desk Key', icon: '🗝️' }]
           }
         }
@@ -100,44 +102,54 @@ export function processGameRule(action, gameState, inventory) {
   // RULE: Examine Bookshelf
   if (type === 'examine' && object === 'bookshelf') {
     if (!roomState.bookshelfExamined) {
+      // DEBUG: Log the state update
+      if (import.meta.env.DEV) {
+        console.log('📚 Bookshelf examination triggered')
+        console.log('   Current bookshelfExamined:', roomState.bookshelfExamined)
+        console.log('   Setting bookshelfExamined to TRUE')
+      }
+      
       return {
         success: true,
-        description: 'The bookshelf is filled with old volumes. As you scan the titles, a small diary catches your eye, tucked between larger books.',
+        description: 'You scan the dusty bookshelf filled with old books. Among them, a leather-bound diary catches your eye. You can now examine or read it.',
         stateUpdates: {
-          roomState: { ...roomState, bookshelfExamined: true, diaryFound: true },
-          inventory: [...inventory, { name: 'Diary', icon: '📔' }]
+          roomState: { bookshelfExamined: true, diaryFound: true }
         }
       }
     }
     return {
       success: true,
-      description: 'The bookshelf remains as you left it, its secrets already revealed.'
+      description: 'You\'ve already examined the bookshelf. The leather diary is still visible among the books.'
     }
   }
 
   // RULE: Examine/Read/Open Diary (all work the same way)
   if (object === 'diary' && (type === 'read' || type === 'examine' || type === 'open')) {
-    // Check if bookshelf has been examined (diary found)
-    if (!roomState.bookshelfExamined || !roomState.diaryFound) {
+    // Check if diary has been found (bookshelf examined)
+    const diaryAvailable = roomState.bookshelfExamined || roomState.diaryFound || hasItem(inventory, ['Diary', 'diary'])
+    
+    if (!diaryAvailable) {
       return {
         success: false,
-        error: 'You don\'t see a diary yet. Try examining the bookshelf.'
+        error: 'You don\'t see a diary here. Try examining the bookshelf first.'
       }
     }
+    
     // If not read yet, read it
     if (!roomState.diaryRead) {
       return {
         success: true,
-        description: 'You open the diary and read: "Time stands still at midnight. The old clock holds secrets for those who listen."',
+        description: 'You carefully open the worn diary. Inside, written in elegant script: "Time stands still at midnight. The old clock holds secrets for those who listen."',
         stateUpdates: {
-          roomState: { ...roomState, diaryRead: true }
+          roomState: { diaryRead: true }
         }
       }
     }
+    
     // Already read
     return {
       success: true,
-      description: 'The diary\'s clue echoes in your mind: "Time stands still at midnight."'
+      description: 'The diary\'s cryptic message echoes in your mind: "Time stands still at midnight."'
     }
   }
 
@@ -148,7 +160,7 @@ export function processGameRule(action, gameState, inventory) {
         success: true,
         description: 'The desk is made of dark mahogany wood. It has a single drawer that appears to be locked.',
         stateUpdates: {
-          roomState: { ...roomState, deskExamined: true }
+          roomState: { deskExamined: true }
         }
       }
     }
@@ -174,7 +186,7 @@ export function processGameRule(action, gameState, inventory) {
         success: true,
         description: 'You insert the desk key into the lock. It turns smoothly, and the drawer slides open. Inside, you find a gleaming golden key!',
         stateUpdates: {
-          roomState: { ...roomState, deskOpened: true, deskUnlocked: true },
+          roomState: { deskOpened: true, deskUnlocked: true },
           inventory: inventory.filter(item => item.name !== deskKey.name).concat([{ name: 'Golden Key', icon: '🔑' }])
         }
       }
@@ -195,7 +207,7 @@ export function processGameRule(action, gameState, inventory) {
         success: true,
         description: 'You use the desk key on the locked drawer. It opens smoothly, revealing a golden key inside!',
         stateUpdates: {
-          roomState: { ...roomState, deskOpened: true, deskUnlocked: true },
+          roomState: { deskOpened: true, deskUnlocked: true },
           inventory: inventory.filter(item => item.name !== deskKey.name).concat([{ name: 'Golden Key', icon: '🔑' }])
         }
       }
@@ -219,7 +231,7 @@ export function processGameRule(action, gameState, inventory) {
         success: true,
         description: 'The painting depicts a serene moonlit scene. You notice it\'s hanging loosely and could be removed.',
         stateUpdates: {
-          roomState: { ...roomState, paintingExamined: true }
+          roomState: { paintingExamined: true }
         }
       }
     }
@@ -236,7 +248,7 @@ export function processGameRule(action, gameState, inventory) {
         success: true,
         description: 'You carefully lift the painting from the wall. Behind it, hidden in the shadows, you discover a safe embedded in the wall!',
         stateUpdates: {
-          roomState: { ...roomState, paintingRemoved: true, safeFound: true }
+          roomState: { paintingRemoved: true, safeFound: true }
         }
       }
     }
@@ -246,8 +258,22 @@ export function processGameRule(action, gameState, inventory) {
     }
   }
 
+  // RULE: Examine Safe
+  if (type === 'examine' && object === 'safe') {
+    if (!roomState.safeFound) {
+      return {
+        success: false,
+        error: 'You don\'t see a safe here. Try examining the painting.'
+      }
+    }
+    return {
+      success: true,
+      description: 'The safe is embedded in the wall. It has a numeric keypad awaiting a 4-digit code.'
+    }
+  }
+
   // RULE: Open Safe (requires code 1200)
-  if (type === 'open' && object === 'safe' || (type === 'enter' && object === 'safe')) {
+  if ((type === 'open' && object === 'safe') || (type === 'enter' && object === 'safe')) {
     if (!roomState.safeFound) {
       return {
         success: false,
@@ -260,7 +286,7 @@ export function processGameRule(action, gameState, inventory) {
           success: true,
           description: 'You enter the code 1200. The safe clicks open, but it\'s empty inside. A red herring!',
           stateUpdates: {
-            roomState: { ...roomState, safeOpened: true }
+            roomState: { safeOpened: true }
           }
         }
       }
@@ -277,7 +303,7 @@ export function processGameRule(action, gameState, inventory) {
     }
     return {
       success: false,
-      error: 'The safe requires a 4-digit code. Try entering a code like "open safe 1200".'
+      error: 'The safe requires a 4-digit code. Try "open safe 1200" or "enter 1200".'
     }
   }
 
@@ -288,7 +314,7 @@ export function processGameRule(action, gameState, inventory) {
         success: true,
         description: 'The exit door is solid and locked. A golden keyhole glints in the dim light.',
         stateUpdates: {
-          roomState: { ...roomState, doorExamined: true }
+          roomState: { doorExamined: true }
         }
       }
     }
@@ -330,14 +356,22 @@ export function processGameRule(action, gameState, inventory) {
     }
   }
 
+  // RULE: Examine Fireplace (red herring)
+  if (type === 'examine' && (object === 'fireplace' || action.originalCommand?.toLowerCase().includes('fireplace'))) {
+    return {
+      success: true,
+      description: 'The stone fireplace is cold and hasn\'t been used in years. Ashes and dust fill the hearth. Nothing useful here.'
+    }
+  }
+
   // Default: Unknown command or unrecognized object
-  const validObjects = ['clock', 'desk', 'bookshelf', 'diary', 'painting', 'safe', 'door']
+  const validObjects = ['clock', 'desk', 'bookshelf', 'diary', 'painting', 'safe', 'door', 'fireplace']
   
   if (type && !object) {
     // Has action but no object
     return {
       success: false,
-      error: `What would you like to ${type}? Try: ${validObjects.map(obj => `'${type} ${obj}'`).join(', ')}`
+      error: `What would you like to ${type}? Try: ${validObjects.slice(0, 5).map(obj => `'${type} ${obj}'`).join(', ')}`
     }
   }
   
@@ -352,7 +386,24 @@ export function processGameRule(action, gameState, inventory) {
   // Generic error
   return {
     success: false,
-    error: `I didn't understand that. Try examining objects you can see: ${validObjects.join(', ')}. Or use commands like 'examine [object]', 'open [object]', 'read [item]'.`
+    error: `I didn't understand that. Try: 'examine [object]', 'open [object]', 'use [item] on [object]', or type ? for help.`
   }
 }
+```
 
+---
+
+## **Key Changes:**
+
+1. **Line 127**: Changed how diary checking works - now uses a simpler check
+2. **Line 122**: Removed inventory addition (diary stays virtual, not in inventory)
+3. **Line 411**: Added fireplace examination rule
+4. **Fixed state update logic** throughout
+
+---
+
+## **Save and Deploy:**
+```
+git add .
+git commit -m "Fix bookshelf and diary logic"
+git push
