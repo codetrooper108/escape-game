@@ -2,15 +2,19 @@
 
 A text-based mobile escape room adventure game built with React and Hugging Face AI. Solve puzzles, collect items, and escape "The Locked Study"!
 
+**📱 Now available as a Progressive Web App (PWA) - Install on your phone!**
+
 ## Features
 
 - 🎮 Text-based adventure gameplay
 - 🤖 AI-powered responses using Mistral-7B-Instruct
 - 📱 Mobile-first responsive design
+- 📲 **Progressive Web App (PWA) - Install on your phone!**
 - 🎒 Inventory system
 - 📊 Move counter
 - 💡 Hint system (one hint per game)
 - 🏆 Win screen with stats
+- 🔄 Offline support (cached content)
 
 ## Game Overview
 
@@ -151,8 +155,17 @@ This project is open source and available for personal use.
 - Built with React and Vite
 - AI powered by Hugging Face Mistral-7B-Instruct
 - Game design and puzzles by the developer
+- PWA features for native app experience
 
-Enjoy escaping! 🎮🔐
+## Progressive Web App (PWA)
+
+This app is installable as a PWA! See [README-PWA.md](./README-PWA.md) for detailed PWA setup and installation instructions.
+
+**Quick Install:**
+- **Android/Chrome**: Look for the install prompt or use browser menu → "Install app"
+- **iOS/Safari**: Tap Share button → "Add to Home Screen"
+
+Enjoy escaping! 🎮🔐📱
 
 
 
