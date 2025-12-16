@@ -390,20 +390,3 @@ export function processGameRule(action, gameState, inventory) {
   }
 }
 ```
-
----
-
-## **Key Changes:**
-
-1. **Line 127**: Changed how diary checking works - now uses a simpler check
-2. **Line 122**: Removed inventory addition (diary stays virtual, not in inventory)
-3. **Line 411**: Added fireplace examination rule
-4. **Fixed state update logic** throughout
-
----
-
-## **Save and Deploy:**
-```
-git add .
-git commit -m "Fix bookshelf and diary logic"
-git push
