@@ -33,8 +33,45 @@ const INITIAL_STATE = {
   currentScene: `You find yourself in a dimly lit study. The air is thick with mystery. A locked desk sits in the corner, a grandfather clock ticks steadily, and a bookshelf lines the wall. A painting of a moon hangs above the fireplace. The exit door stands before you, but it's locked tight.`
 }
 
+// Load state from localStorage or use initial state
+function loadGameState() {
+  try {
+    const saved = localStorage.getItem('escapeGameState')
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      // Ensure all required fields exist
+      return {
+        ...INITIAL_STATE,
+        ...parsed,
+        roomState: {
+          ...INITIAL_STATE.roomState,
+          ...parsed.roomState
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load state:', e)
+  }
+  return INITIAL_STATE
+}
+
+// Save state to localStorage
+function saveGameState(state) {
+  try {
+    localStorage.setItem('escapeGameState', JSON.stringify(state))
+    if (import.meta.env.DEV) {
+      console.log('💾 State saved to localStorage:', {
+        bookshelfExamined: state.roomState.bookshelfExamined,
+        diaryFound: state.roomState.diaryFound
+      })
+    }
+  } catch (e) {
+    console.error('Failed to save state:', e)
+  }
+}
+
 function Game() {
-  const [gameState, setGameState] = useState(INITIAL_STATE)
+  const [gameState, setGameState] = useState(loadGameState)
   const [messages, setMessages] = useState([{
     type: 'system',
     text: INITIAL_STATE.currentScene
@@ -92,6 +129,9 @@ function Game() {
         moves: updates.moves !== undefined ? updates.moves : prev.moves
       }
       
+      // CRITICAL FIX: Save to localStorage immediately (synchronous)
+      saveGameState(newState)
+      
       // CRITICAL FIX: Update ref immediately so next command uses latest state
       gameStateRef.current = newState
       
@@ -104,7 +144,7 @@ function Game() {
         })
         if (updates.roomState?.bookshelfExamined !== undefined) {
           console.log('✅ Bookshelf examined flag set to:', updates.roomState.bookshelfExamined)
-          console.log('📌 Ref updated immediately - next command will use new state')
+          console.log('💾 Saved to localStorage - next command will read from there')
         }
       }
       
@@ -133,17 +173,19 @@ function Game() {
       }
       
       // STEP 2: Process game rule (JavaScript - validates action, updates state)
-      // CRITICAL FIX: Use ref to get the LATEST state, not the stale closure value
-      // This ensures we use the state that was just updated by the previous command
-      const currentState = gameStateRef.current
-      const ruleResult = processGameRule(parsed, { roomState: currentState.roomState }, currentState.inventory)
+      // CRITICAL FIX: Get fresh state from localStorage to ensure we have the absolute latest
+      // This avoids React's async state update timing issues completely
+      const freshState = loadGameState()
+      const ruleResult = processGameRule(parsed, { roomState: freshState.roomState }, freshState.inventory)
       
       // DEBUG: Verify we're using the latest state
       if (import.meta.env.DEV) {
         console.log('🔍 State used for rule check:', {
-          fromRef: currentState.roomState.bookshelfExamined,
+          fromLocalStorage: freshState.roomState.bookshelfExamined,
+          fromRef: gameStateRef.current.roomState.bookshelfExamined,
           fromState: gameState.roomState.bookshelfExamined,
-          match: currentState.roomState.bookshelfExamined === gameState.roomState.bookshelfExamined
+          allMatch: freshState.roomState.bookshelfExamined === gameStateRef.current.roomState.bookshelfExamined && 
+                   gameStateRef.current.roomState.bookshelfExamined === gameState.roomState.bookshelfExamined
         })
       }
       
@@ -182,12 +224,12 @@ function Game() {
         }
 
         // STEP 3: Get AI description (AI only generates description, not logic)
-        // CRITICAL FIX: Use ref to get latest state, then merge with updates
-        const currentStateForAI = gameStateRef.current
-        const updatedInventory = ruleResult.stateUpdates?.inventory || currentStateForAI.inventory
+        // CRITICAL FIX: Use fresh state from localStorage, then merge with updates
+        const freshStateForAI = loadGameState()
+        const updatedInventory = ruleResult.stateUpdates?.inventory || freshStateForAI.inventory
         const updatedRoomState = ruleResult.stateUpdates?.roomState 
-          ? { ...currentStateForAI.roomState, ...ruleResult.stateUpdates.roomState }
-          : currentStateForAI.roomState
+          ? { ...freshStateForAI.roomState, ...ruleResult.stateUpdates.roomState }
+          : freshStateForAI.roomState
 
         const aiDescription = await callHuggingFaceAPI(
           command,
@@ -239,7 +281,10 @@ function Game() {
   }
 
   const handleRestart = () => {
+    // CRITICAL: Clear localStorage on restart
+    localStorage.removeItem('escapeGameState')
     setGameState(INITIAL_STATE)
+    gameStateRef.current = INITIAL_STATE
     setMessages([{
       type: 'system',
       text: INITIAL_STATE.currentScene
