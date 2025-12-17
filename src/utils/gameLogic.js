@@ -32,7 +32,7 @@ export function parseCommand(command) {
     desk: ['desk', 'wooden desk', 'table', 'drawer', 'drawers'],
     clock: ['clock', 'grandfather clock', 'timepiece', 'time', 'grandfather'],
     bookshelf: ['bookshelf', 'shelf', 'bookcase', 'books', 'shelves'],
-    diary: ['diary', 'book', 'journal', 'notebook', 'leather diary', 'small diary'],
+    diary: ['diary', 'journal', 'notebook', 'leather diary', 'small diary'],
     painting: ['painting', 'picture', 'moon', 'art', 'frame', 'moon painting', 'picture frame'],
     safe: ['safe', 'vault', 'lockbox'],
     door: ['door', 'exit', 'way out', 'exit door'],
