@@ -1,7 +1,9 @@
+import { inject } from '@vercel/analytics'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
+inject()
 
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {

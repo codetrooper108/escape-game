@@ -1,7 +1,22 @@
-import React from 'react'
+import React, { useState } from 'react'
 import './WinScreen.css'
 
 function WinScreen({ moves, inventory, onRestart }) {
+  const [copySuccess, setCopySuccess] = useState(false)
+  
+  const gameUrl = window.location.origin
+  const shareText = `I escaped the room in ${moves} moves! 🎉 Can you beat that?`
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(gameUrl)}`
+  const redditUrl = `https://reddit.com/submit?url=${encodeURIComponent(gameUrl)}&title=${encodeURIComponent(shareText)}`
+  
+  const copyToClipboard = () => {
+    const textToCopy = `${shareText}\n${gameUrl}`
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      setCopySuccess(true)
+      setTimeout(() => setCopySuccess(false), 2000)
+    })
+  }
+
   return (
     <div className="win-screen">
       <div className="win-content">
@@ -33,8 +48,36 @@ function WinScreen({ moves, inventory, onRestart }) {
           </div>
         )}
 
-        <button className="restart-button" onClick={onRestart}>
-          Play Again
+        <div className="share-section">
+          <h3>Share Your Victory!</h3>
+          <div className="share-buttons">
+            <a 
+              href={twitterUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="share-button twitter"
+            >
+              🐦 Twitter
+            </a>
+            <a 
+              href={redditUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="share-button reddit"
+            >
+              📱 Reddit
+            </a>
+            <button 
+              onClick={copyToClipboard}
+              className="share-button copy"
+            >
+              {copySuccess ? '✓ Copied!' : '📋 Copy Link'}
+            </button>
+          </div>
+        </div>
+
+        <button className="play-again-button" onClick={onRestart}>
+          🔄 Play Again
         </button>
       </div>
     </div>
@@ -42,8 +85,3 @@ function WinScreen({ moves, inventory, onRestart }) {
 }
 
 export default WinScreen
-
-
-
-
-

@@ -80,7 +80,8 @@ function Game() {
   const [isLoading, setIsLoading] = useState(false)
   const [showWinScreen, setShowWinScreen] = useState(false)
   const messagesEndRef = useRef(null)
-  
+  const inputRef = useRef(null)
+
   // CRITICAL FIX: Use ref to track current state for immediate access
   // This ensures we always use the latest state, even before React re-renders
   const gameStateRef = useRef(gameState)
@@ -129,9 +130,6 @@ function Game() {
         moves: updates.moves !== undefined ? updates.moves : prev.moves
       }
       
-      // CRITICAL FIX: Save to localStorage immediately (synchronous)
-      saveGameState(newState)
-      
       // CRITICAL FIX: Update ref immediately so next command uses latest state
       gameStateRef.current = newState
       
@@ -144,7 +142,7 @@ function Game() {
         })
         if (updates.roomState?.bookshelfExamined !== undefined) {
           console.log('✅ Bookshelf examined flag set to:', updates.roomState.bookshelfExamined)
-          console.log('💾 Saved to localStorage - next command will read from there')
+          console.log('📌 Ref updated immediately - next command will use new state')
         }
       }
       
@@ -258,6 +256,10 @@ function Game() {
     if (input.trim() && !isLoading && !showWinScreen) {
       handleCommand(input)
       setInput('')
+      // Keep focus in input box
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 150)
     }
   }
 
@@ -307,9 +309,20 @@ function Game() {
     <div className="game-container">
       <HelpButton />
       <div className="game-header">
-        <h1>🔐 Escape Room Adventure</h1>
-        <Stats moves={gameState.moves} />
-      </div>
+  <h1>🔐 Escape Room Adventure</h1>
+  <Stats moves={gameState.moves} />
+  <button 
+    onClick={() => {
+      if (confirm('Restart game? Your progress will be lost.')) {
+        handleRestart()
+      }
+    }}
+    className="restart-button"
+    title="Restart Game"
+  >
+    ↻
+  </button>
+</div>
 
       <div className="game-content">
         <div className="messages-container">
@@ -336,6 +349,7 @@ function Game() {
           />
           <form onSubmit={handleSubmit} className="command-form">
             <input
+            ref={inputRef} 
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
